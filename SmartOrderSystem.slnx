@@ -1,1 +1,5 @@
-<Solution />
+<Solution>
+  <Project Path="OrderSystem.App/OrderSystem.App.csproj" />
+  <Project Path="OrderSystem.Core/OrderSystem.Core.csproj" />
+  <Project Path="OrderSystem.Infrastructure/OrderSystem.Infrastructure.csproj" />
+</Solution>
