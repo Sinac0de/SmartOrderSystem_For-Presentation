@@ -16,7 +16,7 @@ namespace OrderSystem.Infrastructure
     {
         // [Security Smell: Hardcoded Credentials in Source Code]
         // Essential complexity is ignored here, introducing severe security risks.
-        public static string ConnectionString = "Host=localhost;Port=5432;Database=postgres;Username=postgres;Password=123456;";
+        public static string ConnectionString = "Host=localhost;Port=5432;Database=postgres;Username=postgres;Password=Sina;";
 
         // [Architectural Smell: Mixing DDL with Persistence Logic]
         // Database schema creation should not reside in the runtime transaction flow.
