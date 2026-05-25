@@ -4,57 +4,66 @@ using OrderSystem.Core;
 using OrderSystem.Infrastructure;
 
 namespace OrderSystem.App {
-    // [Design Pattern Violation: The God Object / Blob Architecture]
-    // A centralized controller component monopolizing processing responsibilities, orchestrating domain logic, 
-    // managing validation flow, and directly calling out-of-process persistence side-effects.
+    // [Architectural Smell: The God Object / High Efferent Coupling (CE)]
+    // This class attempts to orchestrate UI, logic, infrastructure, and authentication.
+    // It violates the "Four Elements of Simple Design" (High understandability, fewest components).
     public class GodProcessor {
-        // [Design Smell: Extreme Cognitive Complexity & Arrow Anti-Pattern]
-        // [Design Smell: Long Method / Low Changeability]
-        // Deeply nested procedural control flow branches exponentially increase cyclomatic weight,
-        // making the architecture highly rigid and resistant to automated testing coverage frameworks.
-        public void ProcessAllOrders(List<Order> orders) {
+        // [Complexity Smell: Accidental Complexity & Arrow Anti-Pattern]
+        // Cyclomatic complexity explodes here, making the system highly rigid.
+        public void ProcessSystem(List<Order> orders, User user) {
+            AuthService auth = new AuthService();
+            string hash = auth.HashPassword(user.PasswordHash);
+
             for (int i = 0; i < orders.Count; i++) {
                 if (orders[i].Status == "New") {
-                    // [Design Smell: Feature Envy / Violation of Single Responsibility]
-                    // This algorithm environment displays excessive intimacy with the internal state variables of Order.
-                    // This data-manipulation framework logically belongs encapsulated inside the host model context.
+                    // [Design Smell: Feature Envy & Inappropriate Intimacy]
+                    // The processor intimately manipulates the internal data of the Order object.
                     if (orders[i].CustomerType == 1) {
-                        if (orders[i].TotalAmount > 100) {
-                            orders[i].TotalAmount = orders[i].TotalAmount - 10;
-                        }
+                        // ----- START DRY VIOLATION 1 -----
+                        // [Design Smell: Massive Code Duplication]
+                        double tRate = 0.09;
+                        double ship = 15.0;
+                        if (orders[i].TotalAmount > 100) ship = 0;
+                        orders[i].TotalAmount = orders[i].TotalAmount + (orders[i].TotalAmount * tRate) + ship;
+                        // ----- END DRY VIOLATION 1 -----
                     } else if (orders[i].CustomerType == 2) {
-                        if (orders[i].TotalAmount > 50) {
-                            orders[i].TotalAmount = orders[i].TotalAmount - (orders[i].TotalAmount * 0.2);
-                        }
+                        // ----- START DRY VIOLATION 2 -----
+                        double tRate = 0.09;
+                        double ship = 15.0;
+                        if (orders[i].TotalAmount > 100) ship = 0;
+                        orders[i].TotalAmount = orders[i].TotalAmount + (orders[i].TotalAmount * tRate) + ship;
+                        // ----- END DRY VIOLATION 2 -----
 
-                        // [Design Smell: DRY (Don't Repeat Yourself) Duplication Smell]
-                        // Duplicated mathematical calculation blocks inserted to emulate careless legacy velocity debt.
-                        if (orders[i].TotalAmount > 500) {
-                            orders[i].TotalAmount = orders[i].TotalAmount - 50;
-                        }
+                        orders[i].TotalAmount -= 20;
                     } else if (orders[i].CustomerType == 3) {
-                        if (orders[i].TotalAmount > 1000) {
-                            orders[i].TotalAmount = orders[i].TotalAmount - 150;
-                        } else {
-                            orders[i].TotalAmount = orders[i].TotalAmount - 50;
-                        }
+                        // ----- START DRY VIOLATION 3 -----
+                        double tRate = 0.09;
+                        double ship = 15.0;
+                        if (orders[i].TotalAmount > 100) ship = 0;
+                        orders[i].TotalAmount = orders[i].TotalAmount + (orders[i].TotalAmount * tRate) + ship;
+                        // ----- END DRY VIOLATION 3 -----
+
+                        orders[i].TotalAmount -= 100;
+                    }
+
+                    // [Reliability Smell: Null Reference Risk]
+                    if (orders[i].PaymentToken.Length > 5) {
+                        Console.WriteLine("Token check passed.");
                     }
 
                     orders[i].Status = "Processed";
+                    GlobalSystemCache.TotalProcessedOrders++;
 
-                    // [Architecture Smell: Improper Coupling Balance & Tight Physical Integration Strength]
-                    // Directly instantiating explicit infrastructure concrete service dependencies inside core logic paths.
-                    // This structure actively violates the Dependency Inversion Principle (DIP).
+                    // [Architectural Smell: Unbalanced Coupling (Distance vs Strength)]
+                    // High Strength (direct instantiation) with High Distance (cross-layer call) creates a Distributed Monolith feel.
                     DataService dbService = new DataService();
-                    dbService.SaveOrderToDatabase(orders[i]);
-
-                    Console.WriteLine("Order " + orders[i].OrderId + " processed.");
+                    dbService.SaveOrder(orders[i]);
                 }
             }
 
-            // [Code Smell: Dead Code / Unused Local Allocation]
-            // Declared memory reference assignment that is never evaluated. Checked and flagged during code quality analysis scans.
-            int unusedVariableForSonarQubeMetric = 42;
+            // [Maintainability Smell: Dead Code]
+            // Variables assigned but never used.
+            int obsoleteCalculation = 404;
         }
     }
 }

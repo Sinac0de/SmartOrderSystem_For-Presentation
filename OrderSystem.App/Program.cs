@@ -1,26 +1,37 @@
 ﻿using System;
 using System.Collections.Generic;
 using OrderSystem.Core;
+using OrderSystem.Infrastructure;
 
 namespace OrderSystem.App {
     class Program {
         static void Main(string[] args) {
-            // Initializing environment pipeline context with legacy mock data records
+            Console.WriteLine("=== Starting Toxic Architecture System ===");
+
+            var dbSetup = new DataService();
+            dbSetup.InitializeDirtyDatabase();
+            Console.WriteLine("PostgreSQL connected (Dirty DDL Executed).");
+
+            var user = new User { Username = "admin", PasswordHash = "123456" };
+
+            // Purposefully leaving PaymentToken as null to simulate runtime risk
             var orders = new List<Order>
             {
-                new Order { OrderId = 1, CustomerName = "Sina Moradian", TotalAmount = 150, CustomerType = 1, Status = "New", CreatedDate = DateTime.Now },
-                new Order { OrderId = 2, CustomerName = "Dr. Ashtiani", TotalAmount = 1200, CustomerType = 3, Status = "New", CreatedDate = DateTime.Now }
+                new Order { OrderId = 1, CustomerName = "Sina Moradian", TotalAmount = 50, CustomerType = 1, Status = "New", PaymentToken = "TOKEN123" },
+                new Order { OrderId = 2, CustomerName = "Dr. Ashtiani", TotalAmount = 500, CustomerType = 2, Status = "New", PaymentToken = "TOKEN456" }
             };
 
-            Console.WriteLine("=== Smart Order System Target Architecture ===");
-            Console.WriteLine("[Warning] Executing highly coupled God Object iteration flow...");
-
+            Console.WriteLine("Executing God Object...");
             var processor = new GodProcessor();
 
-            // Triggers pipeline execution loop sequence
-            processor.ProcessAllOrders(orders);
+            try {
+                processor.ProcessSystem(orders, user);
+            } catch (Exception ex) {
+                Console.WriteLine($"[Expected Runtime Failure Captured]: {ex.Message}");
+            }
 
-            Console.WriteLine("Execution complete. Inspect static metrics dashboard for architectural debt detection analytics.");
+            Console.WriteLine($"Total processed in Global Cache: {GlobalSystemCache.TotalProcessedOrders}");
+            Console.WriteLine("Execution finished! Check pgAdmin for records and SonarQube for debt metrics.");
         }
     }
 }
