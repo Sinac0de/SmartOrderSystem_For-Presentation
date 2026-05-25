@@ -58,6 +58,12 @@ namespace OrderSystem.App {
                     // High Strength (direct instantiation) with High Distance (cross-layer call) creates a Distributed Monolith feel.
                     DataService dbService = new DataService();
                     dbService.SaveOrder(orders[i]);
+
+                    // Triggering the massively duplicated invoice generator
+                    InvoiceGenerator invoiceGen = new InvoiceGenerator();
+                    if (orders[i].CustomerType == 1) invoiceGen.GenerateNormalInvoice(orders[i]);
+                    else if (orders[i].CustomerType == 2) invoiceGen.GenerateVipInvoice(orders[i]);
+                    else if (orders[i].CustomerType == 3) invoiceGen.GenerateCorporateInvoice(orders[i]);
                 }
             }
 
