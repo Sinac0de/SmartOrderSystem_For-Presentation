@@ -3,66 +3,36 @@ using System.IO;
 using Npgsql;
 using OrderSystem.Core;
 
-namespace OrderSystem.Infrastructure
-{
-    // [Architectural Smell: Mutable Global State / System Entropy]
-    // Increases system entropy and makes side-by-side refactoring (Strangler Pattern) impossible.
-    public static class GlobalSystemCache
-    {
-        public static int TotalProcessedOrders = 0;
-    }
+namespace OrderSystem.Infrastructure {
+    public class DataService : IDataService {
+        // Credentials should be injected via IConfiguration in a real app, 
+        // but parameterized queries fix the critical vulnerability.
+        private readonly string _connectionString = "Host=localhost;Port=5432;Database=postgres;Username=postgres;Password=Sina;";
 
-    public class DataService
-    {
-        // [Security Smell: Hardcoded Credentials in Source Code]
-        // Essential complexity is ignored here, introducing severe security risks.
-        public static string ConnectionString = "Host=localhost;Port=5432;Database=postgres;Username=postgres;Password=Sina;";
+        public void SaveOrder(Order order) {
+            // [Refactored: Parameterized Queries (Fixes SQL Injection)]
+            string query = "INSERT INTO Orders (Id, CustomerName, Amount) VALUES (@Id, @Name, @Amount)";
 
-        // [Architectural Smell: Mixing DDL with Persistence Logic]
-        // Database schema creation should not reside in the runtime transaction flow.
-        public void InitializeDirtyDatabase()
-        {
-            try 
-            {
-                using (var conn = new NpgsqlConnection(ConnectionString)) 
-                {
-                    conn.Open();
-                    string createTableQuery = "CREATE TABLE IF NOT EXISTS Orders (Id INT, CustomerName VARCHAR(100), Amount FLOAT)";
-                    using (var cmd = new NpgsqlCommand(createTableQuery, conn))
-                    {
-                        cmd.ExecuteNonQuery();
+            // [Refactored: Proper Resource Management (Fixes Memory/Connection Leaks)]
+            using (var connection = new NpgsqlConnection(_connectionString))
+            using (var command = new NpgsqlCommand(query, connection)) {
+                command.Parameters.AddWithValue("@Id", order.OrderId);
+                command.Parameters.AddWithValue("@Name", order.CustomerName);
+                command.Parameters.AddWithValue("@Amount", order.TotalAmount);
+
+                try {
+                    connection.Open();
+                    command.ExecuteNonQuery();
+
+                    // Safe I/O operation
+                    using (StreamWriter writer = new StreamWriter("dummy_log.txt", true)) {
+                        writer.WriteLine($"Order saved securely: {order.OrderId}");
                     }
+                } catch (NpgsqlException ex) {
+                    // [Refactored: Proper Error Handling]
+                    Console.WriteLine($"Database Error: {ex.Message}");
+                    throw;
                 }
-            } 
-            catch (Exception)
-            {
-                // [Implementation Smell: Exception Swallowing]
-                // Error invisibility - violations are hidden from the monitoring system.
-            }
-        }
-
-        public void SaveOrder(Order order)
-        {
-            try
-            {
-                // [Security Smell: SQL Injection Vulnerability]
-                // Bypassing parameterized queries directly attacks the integrity of the data layer.
-                string query = "INSERT INTO Orders (Id, CustomerName, Amount) VALUES (" + order.OrderId + ", '" + order.CustomerName + "', " + order.TotalAmount + ")";
-
-                // [Reliability Smell: Resource Leakage]
-                // NpgsqlConnection is left unmanaged. Exhausts the connection pool over time.
-                NpgsqlConnection connection = new NpgsqlConnection(ConnectionString);
-                NpgsqlCommand command = new NpgsqlCommand(query, connection);
-                connection.Open();
-                command.ExecuteNonQuery();
-                
-                // [Reliability Smell: Unclosed IO Stream]
-                StreamWriter writer = new StreamWriter("dummy_log.txt", true);
-                writer.WriteLine("Order saved to PostgreSQL: " + order.OrderId);
-            }
-            catch (Exception)
-            {
-                // [Implementation Smell: Empty Catch Block]
             }
         }
     }
