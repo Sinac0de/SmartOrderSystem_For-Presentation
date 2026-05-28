@@ -35,8 +35,10 @@ jobs:
       - name: Install SonarQube Cloud scanner
         shell: powershell
         run: |
-          New-Item -Path ${{ runner.temp }}\scanner -ItemType Directory
-          dotnet tool update dotnet-sonarscanner --tool-path ${{ runner.temp }}\scanner
+          if (!(Test-Path -Path "${{ runner.temp }}\scanner")) {
+            New-Item -Path "${{ runner.temp }}\scanner" -ItemType Directory
+          }
+          dotnet tool update dotnet-sonarscanner --tool-path "${{ runner.temp }}\scanner"
       - name: Build and analyze
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
