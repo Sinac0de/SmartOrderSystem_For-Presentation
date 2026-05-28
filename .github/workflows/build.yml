@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - master
-      - feature/refactor-architecture # شاخه تمیز شما
+      - feature/refactor-architecture 
   pull_request:
     types: [opened, synchronize, reopened]
 
