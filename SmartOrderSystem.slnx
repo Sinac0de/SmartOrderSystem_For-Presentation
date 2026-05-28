@@ -2,4 +2,5 @@
   <Project Path="OrderSystem.App/OrderSystem.App.csproj" />
   <Project Path="OrderSystem.Core/OrderSystem.Core.csproj" />
   <Project Path="OrderSystem.Infrastructure/OrderSystem.Infrastructure.csproj" />
+  <Project Path="OrderSystem.Tests/OrderSystem.Tests.csproj" />
 </Solution>
