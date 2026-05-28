@@ -6,32 +6,21 @@ using OrderSystem.Infrastructure;
 namespace OrderSystem.App {
     class Program {
         static void Main(string[] args) {
-            Console.WriteLine("=== Starting Toxic Architecture System ===");
+            Console.WriteLine("=== Executing Clean Architecture System ===");
 
-            var dbSetup = new DataService();
-            dbSetup.InitializeDirtyDatabase();
-            Console.WriteLine("PostgreSQL connected (Dirty DDL Executed).");
-
-            var user = new User { Username = "admin", PasswordHash = "123456" };
-
-            // Purposefully leaving PaymentToken as null to simulate runtime risk
             var orders = new List<Order>
             {
-                new Order { OrderId = 1, CustomerName = "Sina Moradian", TotalAmount = 50, CustomerType = 1, Status = "New", PaymentToken = "TOKEN123" },
-                new Order { OrderId = 2, CustomerName = "Dr. Ashtiani", TotalAmount = 500, CustomerType = 2, Status = "New", PaymentToken = "TOKEN456" }
+                new Order(1, "Sina", 50, CustomerCategory.Normal, "TOK_123"),
+                new Order(2, "Dr. Ashtiani", 500, CustomerCategory.VIP, "TOK_456")
             };
 
-            Console.WriteLine("Executing God Object...");
-            var processor = new GodProcessor();
+            // [Refactored: Dependency Injection wire-up]
+            IDataService dataService = new DataService();
+            var processor = new CleanOrderProcessor(dataService);
 
-            try {
-                processor.ProcessSystem(orders, user);
-            } catch (Exception ex) {
-                Console.WriteLine($"[Expected Runtime Failure Captured]: {ex.Message}");
-            }
+            processor.ProcessOrders(orders);
 
-            Console.WriteLine($"Total processed in Global Cache: {GlobalSystemCache.TotalProcessedOrders}");
-            Console.WriteLine("Execution finished! Check pgAdmin for records and SonarQube for debt metrics.");
+            Console.WriteLine("Execution finished! Check SonarQube for A-Grade metrics!");
         }
     }
 }
