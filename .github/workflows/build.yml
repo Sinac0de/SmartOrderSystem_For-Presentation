@@ -35,15 +35,17 @@ jobs:
       - name: Install SonarQube Cloud scanner
         shell: powershell
         run: |
-          if (!(Test-Path -Path "${{ runner.temp }}\scanner")) {
-            New-Item -Path "${{ runner.temp }}\scanner" -ItemType Directory
-          }
-          dotnet tool update dotnet-sonarscanner --tool-path "${{ runner.temp }}\scanner"
-      - name: Build and analyze
+          New-Item -Path ${{ runner.temp }}\scanner -ItemType Directory
+          dotnet tool update dotnet-sonarscanner --tool-path ${{ runner.temp }}\scanner
+          
+- name: Build and analyze
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         shell: powershell
         run: |
-          ${{ runner.temp }}\scanner\dotnet-sonarscanner begin /k:"Sinac0de_SmartOrderSystem_For-Presentation" /o:"sinac0de" /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+          ${{ runner.temp }}\scanner\dotnet-sonarscanner begin /k:"Sinac0de_SmartOrderSystem_For-Presentation" /o:"sinac0de" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
+
           dotnet build
+          dotnet test --collect:"XPlat Code Coverage" --results-directory ./coverage
+
           ${{ runner.temp }}\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
